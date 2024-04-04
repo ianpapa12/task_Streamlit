@@ -33,7 +33,8 @@ llm = ChatOpenAI(
     streaming=True,
     callbacks=[
         ChatCallbackHandler(),
-    ],
+    ], 
+    openai_api_key=st.session_state["api_key"]
 )
 
 @st.cache_data(show_spinner="Embedding file...")
