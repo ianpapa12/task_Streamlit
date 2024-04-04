@@ -15,6 +15,16 @@ st.set_page_config(
     page_icon="📃",
 )
 
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+
+if "api_key" not in st.session_state:
+    st.session_state["api_key"] = None
+
+if "api_key_check" not in st.session_state:
+    st.session_state["api_key_check"] = False
+
+
 class ChatCallbackHandler(BaseCallbackHandler):
     message = ""
 
@@ -40,11 +50,10 @@ llm = ChatOpenAI(
 @st.cache_data(show_spinner="Embedding file...")
 def embed_file(file):
     file_content = file.read()
-    file_path = f"./..cache/files/{file.name}"
+    file_path = f"./.cache/files/{file.name}"
     with open(file_path, "wb") as f:
-        os.makedirs(f"./..cache/files", exist_ok=True)
         f.write(file_content)
-    cache_dir = LocalFileStore(f"./..cache/embeddings/{file.name}")
+    cache_dir = LocalFileStore(f"./.cache/embeddings/{file.name}")
     splitter = CharacterTextSplitter.from_tiktoken_encoder(
         separator="\n",
         chunk_size=600,
@@ -79,6 +88,9 @@ def paint_history():
 def format_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
 
+def save_api_key(api_key):
+    st.session_state["api_key"] = api_key
+    st.session_state["api_key_check"] = True
 
 prompt = ChatPromptTemplate.from_messages(
     [
@@ -107,11 +119,27 @@ Upload your files on the sidebar.
 )
 
 with st.sidebar:
-    api_key = st.text_input("Write your own api key")
     file = st.file_uploader(
         "Upload a .txt .pdf or .docx file",
         type=["pdf", "txt", "docx"],
     )
+
+    api_key = st.text_input(
+        "Enter an api key",
+        placeholder="sk-...",
+        disabled=st.session_state["api_key"] != None,
+    ).strip()
+
+    if api_key:
+        save_api_key(api_key)
+        st.write("API key has been saved.")
+
+    button = st.button("save")
+
+    if button:
+        save_api_key(api_key)
+        if api_key == "":
+            st.warning("Please insert OPENAI_API_KEY.")
 
 if file:
     retriever = embed_file(file)
