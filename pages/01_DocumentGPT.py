@@ -35,7 +35,6 @@ llm = ChatOpenAI(
     callbacks=[
         ChatCallbackHandler(),
     ],
-    openai_api_key=os.getenv("OPENAI_API_KEY")
 )
 
 @st.cache_data(show_spinner="Embedding file...")
